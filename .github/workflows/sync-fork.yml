@@ -15,6 +15,11 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史记录
+          
       - name: Sync fork
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
         with:
@@ -23,17 +28,30 @@ jobs:
           upstream_repo: ZhuLinsen/daily_stock_analysis
           
           # 同步策略配置
-          sync_branch_only: 'main'           # 只同步main分支
-          merge_method: 'merge'              # 合并方式：merge/rebase/hard-reset
-          conflict_resolution: 'theirs'       # 冲突解决策略：theirs/ours
+          upstream_sync_branch: main
+          target_sync_branch: main
+          
+          # sync_branch_only: 'main'           # 只同步main分支
+          # merge_method: 'merge'              # 合并方式：merge/rebase/hard-reset
+          # conflict_resolution: 'theirs'       # 冲突解决策略：theirs/ours
           
           # 身份配置
           git_user_name: 'github-actions[bot]'
           git_user_email: 'github-actions[bot]@users.noreply.github.com'
           
           # 安全配置
-          allow_empty_commits: false         # 不允许空提交
-          force_push: false                 # 不强制推送
+          # allow_empty_commits: false         # 不允许空提交
+          # force_push: false                 # 不强制推送
+          
+          # 可选：合并策略
+          git_config_pull_rebase: 'false'  # 使用merge而非rebase
+
+          # 高级git参数
+          upstream_pull_args: '--no-edit --strategy-option=theirs'  # 无交互合并，采用上游更改解决冲突
+          # target_branch_push_args: '--force'  # 强制推送（谨慎使用）
+          
+          # 可选：测试模式（设为true只显示将要执行的操作，不实际执行）
+          test_mode: 'false'
           
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
