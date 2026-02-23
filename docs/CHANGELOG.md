@@ -11,10 +11,18 @@
 - **Web 登录认证重构**：移除 `ADMIN_PASSWORD`、`ADMIN_PASSWORD_HASH`，改用 `ADMIN_AUTH_ENABLED` 开关 + 文件凭证。启用后首次访问在网页设置初始密码，支持「系统设置 > 修改密码」和 CLI `python -m src.auth reset_password` 重置。
 
 ### 修复
+- 🐛 **StockTrendAnalyzer 从未执行** (Issue #357)
+  - 根因：`get_analysis_context` 仅返回 2 天数据且无 `raw_data`，pipeline 中 `raw_data in context` 始终为 False
+  - 修复：Step 3 直接调用 `get_data_range` 获取 90 日历天（约 60 交易日）历史数据用于趋势分析
+  - 改善：趋势分析失败时用 `logger.warning(..., exc_info=True)` 记录完整 traceback
 - 🐛 **BOT 与 WEB UI 股票代码大小写统一** (Issue #355)
   - BOT `/analyze` 与 WEB UI 触发分析的股票代码统一为大写（如 `aapl` → `AAPL`）
   - 新增 `canonical_stock_code()`，在 BOT、API、Config、CLI、task_queue 入口处规范化
   - 历史记录与任务去重逻辑可正确识别同一股票（大小写不再影响）
+- 🐛 **ETF 分析仅关注指数走势** (Issue #274)
+  - 美股/港股 ETF（如 VOO、QQQ）与 A 股 ETF 不再纳入基金公司层面风险（诉讼、声誉等）
+  - 搜索维度：ETF/指数专用 risk_check、earnings、industry 查询，避免命中基金管理人新闻
+  - AI 提示：指数型标的分析约束，`risk_alerts` 不得出现基金管理人公司经营风险
 - 修复美股（如 ADBE）技术指标矛盾：akshare 美股复权数据异常，统一美股历史数据源为 YFinance（Issue #311）
 - 🐛 **美股指数实时行情与日线数据** (Issue #273)
   - 修复 SPX、DJI、IXIC、NDX、VIX、RUT 等美股指数无法获取实时行情的问题
